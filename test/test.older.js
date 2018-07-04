@@ -51,7 +51,7 @@ describe('MarkovChain', function() {
   })
 
   describe('process', function() {
-    it('should process files into word banks', function(done) {
+    it('should process files into token bank', function(done) {
       testMarkov.use(['./test/fixtures/a.txt']).start('not').end(5).process(function(err, resp) {
         expect(err).to.not.exist
         expect(testMarkov.countTotal('this')).to.equal(2)

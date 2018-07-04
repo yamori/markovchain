@@ -1,5 +1,5 @@
 /* eslint global-require: 0 */
-'use strict';
+//'use strict';
 
 const pickOneByWeight = require('pick-one-by-weight')
 
@@ -11,6 +11,7 @@ class MarkovChain {
     this.sentence = ''
     this._normalizeFn = normFn
     this.parseBy = /(?:\.|\?|\n)/ig
+    this.kOrder = 5;
     this.parse(contents);
   }
   startFn(wordList) {
@@ -23,34 +24,34 @@ class MarkovChain {
     return this.sentence.split(' ').length > 7
   }
   process() {
-    let curWord = this.startFn(this.wordBank)
+    let curToken = this.startFn(this.wordBank)
 
-    this.sentence = curWord
-    while (this.wordBank[curWord] && !this.endFn()) {
-      curWord = pickOneByWeight(this.wordBank[curWord])
-      this.sentence += ' ' + curWord
+    this.sentence = curToken
+    while (this.wordBank[curToken] && !this.endFn()) {
+      var nextChar = pickOneByWeight(this.wordBank[curToken]);
+      this.sentence += nextChar;
+      curToken = this.sentence.substring(this.sentence.length - this.kOrder, this.sentence.length);
     }
     return this.sentence
   }
   parse(text = '', parseBy = this.parseBy) {
-    text.split(parseBy).forEach((lines) => {
-      const words = lines.split(' ').filter((w) => w.trim() !== '')
 
-      for (let i = 0; i < words.length - 1; i++) {
-        const curWord = this._normalize(words[i])
-        const nextWord = this._normalize(words[i + 1])
+    var kOrder = this.kOrder;
+    for (let i = 0; i < (text.length - 2 - kOrder); i++) {
+      let curToken =    text.substring(i, i + kOrder);
+      let nextPhrase =   text.substring(i + 1, i + kOrder + 1);
+      let nextChar =   text.substring(i + kOrder, i + kOrder + 1);
 
-        if (!this.wordBank[curWord]) {
-          this.wordBank[curWord] = Object.create(null);
-        }
-        if (!this.wordBank[curWord][nextWord]) {
-          this.wordBank[curWord][nextWord] = 1
-        }
-        else {
-          this.wordBank[curWord][nextWord] += 1
-        }
+      if (!this.wordBank[curToken]) {
+        this.wordBank[curToken] = Object.create(null);
       }
-    })
+      if (!this.wordBank[curToken][nextChar]) {
+        this.wordBank[curToken][nextChar] = 1;
+      } else {
+        this.wordBank[curToken][nextChar] += 1;
+      }
+    }
+
     return this
   }
   start(fnStr) {
@@ -78,7 +79,7 @@ class MarkovChain {
     }
     else if (endType === 'number' || fnStrOrNum === undefined) {
       fnStrOrNum = fnStrOrNum || Infinity
-      this.endFn = () => this.sentence.split(' ').length > fnStrOrNum
+      this.endFn = () => this.sentence.length > fnStrOrNum;
     }
     else {
       throw new Error('Must pass a function, string or number into end()')
